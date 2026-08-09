@@ -389,3 +389,7 @@ secrets:
         pWHfm2Zjrx2nG5G/bG3CYccKS0gVVItbqb9iQ6wrUQNp673KUPRKk6mTpdfgu/Tp
         CPCB6gTc+WqzSsS5tsQzU2sCAwEAAQ==
         -----END PUBLIC KEY-----
+
+persistence:
+  hostPath: "/var/delivery-db"
+  containerPath: "/var/delivery-db"
