@@ -165,6 +165,8 @@ secrets:
             subjects:
               - type: github-user
                 name: your-username
+              - type: github-app
+                name: your-app-name
 ```
 
 | Field | Where to find it |
@@ -184,36 +186,13 @@ Possible **subject types** for `role_bindings`:
 | `github-app` | GitHub App slug (regex) | `yourname-odg-local` |
 
 
-**`github`** section — allows extensions such as the artefact enumerator and cache manager to
-authenticate against GitHub. This section is optional, but without it you will see the following
-error in your logs once the cluster is up and the cronjobs are running:
+The `github-app` permission allows extensions such as the artefact enumerator and cache manager to
+authenticate against GitHub. Otherwise you might find such errors:
 
 ```
 requests.exceptions.HTTPError: 401 Client Error: Unauthorized for url:
 http://delivery-service.odg.svc.cluster.local:8080/auth?...&api_url=https://api.github.com
 ```
-
-```yaml
-secrets:
-  ...
-  github:
-    github_com:
-      api_url: https://api.github.com
-      http_url: https://github.com
-      repo_urls: ['.*']
-      username: ...
-      auth_token: ...
-```
-
-Go to **Settings** → **Developer settings** → **Personal access tokens** → **Tokens (classic)**
-(or open [github.com/settings/tokens](https://github.com/settings/tokens)) and generate a new
-classic token with the following permissions:
-
-- `repo`
-- `write:packages`
-
-Fill in `username` and `auth_token` with your GitHub username and the new token.
-
 
 
 ### Create `values-local.yaml`
@@ -285,28 +264,4 @@ kubectl get pods
 # delivery-dashboard-...                1/1     Running     0          33m
 # delivery-db-0                         1/1     Running     0          34m
 # delivery-service-...                  1/1     Running     0          34m
-```
-
-## Known issue: extension `401 Unauthorized` (TODO)
-
-Some extensions (`artefact-enumerator`, `cache-manager`) may fail with:
-
-```
-requests.exceptions.HTTPError: 401 Client Error: Unauthorized for url:
-http://delivery-service.odg.svc.cluster.local:8080/auth?...&api_url=https://api.github.com
-```
-
-The extensions call the delivery-service's `/auth` endpoint, which needs a plain
-GitHub token to validate the request. The `github-app` secret does not cover
-this. Uncomment and fill in the `secrets.github` block in `secrets-local.yaml`
-with a GitHub personal access token:
-
-```yaml
-github:
-  github_com:
-    api_url: https://api.github.com
-    http_url: https://github.com
-    repo_urls: ['.*']
-    username: ...
-    auth_token: ...
 ```
