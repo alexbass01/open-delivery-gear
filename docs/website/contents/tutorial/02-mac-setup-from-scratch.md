@@ -152,6 +152,7 @@ identities to ODG roles:
 
 ```yaml
 secrets:
+  ...
   oauth-cfg:
       local:
         client_id: Iv...
@@ -181,6 +182,38 @@ Possible **subject types** for `role_bindings`:
 | `github-org` | Members of an org | `my-org` |
 | `github-team` | Members of a team, `org/team-slug` | `my-org/platform-team` |
 | `github-app` | GitHub App slug (regex) | `yourname-odg-local` |
+
+
+**`github`** section — allows extensions such as the artefact enumerator and cache manager to
+authenticate against GitHub. This section is optional, but without it you will see the following
+error in your logs once the cluster is up and the cronjobs are running:
+
+```
+requests.exceptions.HTTPError: 401 Client Error: Unauthorized for url:
+http://delivery-service.odg.svc.cluster.local:8080/auth?...&api_url=https://api.github.com
+```
+
+```yaml
+secrets:
+  ...
+  github:
+    github_com:
+      api_url: https://api.github.com
+      http_url: https://github.com
+      repo_urls: ['.*']
+      username: ...
+      auth_token: ...
+```
+
+Go to **Settings** → **Developer settings** → **Personal access tokens** → **Tokens (classic)**
+(or open [github.com/settings/tokens](https://github.com/settings/tokens)) and generate a new
+classic token with the following permissions:
+
+- `repo`
+- `write:packages`
+
+Fill in `username` and `auth_token` with your GitHub username and the new token.
+
 
 
 ### Create `values-local.yaml`
