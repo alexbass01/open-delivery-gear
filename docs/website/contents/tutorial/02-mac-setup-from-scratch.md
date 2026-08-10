@@ -126,17 +126,18 @@ cp local-setup/secrets-local.yaml.example local-setup/secrets-local.yaml
 **`github-app`** section:
 
 ```yaml
-github-app:
-  github_com:
-    api_url: https://api.github.com
-    app_id: ... # your app id e.g 4507220
-    mappings:
-      - installation_id: ... # your installation id e.g. 151722591
-        org: ... # your-username (unless you created an org-wide app)
-    private_key: |
-      -----BEGIN RSA PRIVATE KEY-----
-      ...
-      -----END RSA PRIVATE KEY-----
+secrets:
+  github-app:
+    github_com:
+      api_url: https://api.github.com
+      app_id: ... # your app id e.g 1234567
+      mappings:
+        - installation_id: ... # your installation id e.g. 12345678
+          org: ... # your-username (unless you created an org-wide app)
+      private_key: |
+        -----BEGIN RSA PRIVATE KEY-----
+        ...
+        -----END RSA PRIVATE KEY-----
 ```
 
 | Field | Where to find it |
@@ -150,18 +151,19 @@ github-app:
 identities to ODG roles:
 
 ```yaml
-oauth-cfg:
-  local:
-    client_id: Iv...
-    client_secret: ...
-    api_url: https://api.github.com
-    type: github
-    name: GitHub
-    role_bindings:
-      - roles: [admin]
-        subjects:
-          - type: github-user
-            name: your-username
+secrets:
+  oauth-cfg:
+      local:
+        client_id: Iv...
+        client_secret: ...
+        api_url: https://api.github.com
+        type: github
+        name: GitHub
+        role_bindings:
+          - roles: [admin]
+            subjects:
+              - type: github-user
+                name: your-username
 ```
 
 | Field | Where to find it |
@@ -169,7 +171,7 @@ oauth-cfg:
 | `client_id` | GitHub App settings → "Client ID" |
 | `client_secret` | GitHub App settings → generate a client secret |
 
-Possible **role types** for `role_bindings` are `admin`, `reader` and `writer.`
+Possible **role types** for `role_bindings` are `admin`, `reader` and `writer`.
 
 Possible **subject types** for `role_bindings`:
 
