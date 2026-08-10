@@ -50,6 +50,11 @@ Check the latest version at the
 wget -qO- https://ocm.software/install-cli.sh | OCM_VERSION=0.12 bash
 ```
 
+or omit the version tag to just use the lastest:
+```
+wget -qO- https://ocm.software/install-cli.sh | bash
+```
+
 Add the install directory to your `$PATH`:
 
 ```bash
