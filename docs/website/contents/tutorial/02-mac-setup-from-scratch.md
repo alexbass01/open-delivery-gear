@@ -43,24 +43,17 @@ gh auth login   # GitHub.com → ... → Login with a web browser
 
 ## 2. Install the OCM CLI
 
-Check the latest version at the
+Follow the steps outlined here:
 [OCM install guide](https://ocm.software/docs/getting-started/install-the-ocm-cli/).
 
-```bash
-wget -qO- https://ocm.software/install-cli.sh | OCM_VERSION=0.12 bash
-```
-
-or omit the version tag to just use the lastest:
-```
-wget -qO- https://ocm.software/install-cli.sh | bash
-```
-
-Add the install directory to your `$PATH`:
+:::{note}
+If you have trouble adding the `ocm` executable to the path `$PATH`, try this:
 
 ```bash
 echo 'export PATH="$PATH:$HOME/.local/bin"' >> ~/.zshrc && source ~/.zshrc
-ocm version   # {"major":"0","minor":"12", ... "platform":"darwin/arm64"}
+ocm version   # {"major":"...","minor":"...", ... "platform":"darwin/arm64"}
 ```
+:::
 
 :::{note}
 To verify the binary manually (requires `gh`):
