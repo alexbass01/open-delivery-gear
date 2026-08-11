@@ -70,7 +70,7 @@ ODG needs two things to start: A **GitHub App** (server-to-server access) and
 private registry config here — the main ODG images are public.
 
 :::{note}
-The main cluster config lives in `local-setup/kind/cluster/values.yaml`. You
+The main cluster config lives in `local-setup/kind/values.yaml`. You
 don't need to edit it, but the
 [values documentation](https://github.com/open-component-model/odg-core/blob/master/charts/bootstrapping/values.documentation.yaml)
 describes every field.
