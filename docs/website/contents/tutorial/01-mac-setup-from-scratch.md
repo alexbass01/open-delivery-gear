@@ -32,7 +32,7 @@ docker run hello-world
 ```
 :::
 
-:::{dropdown} Recommended: install the GitHub CLI
+:::{dropdown} Recommended: Install the GitHub CLI
 The OCM installer uses `gh` to verify the install.
 
 ```bash
@@ -46,14 +46,6 @@ gh auth login   # GitHub.com → ... → Login with a web browser
 Follow the steps outlined here:
 [OCM install guide](https://ocm.software/docs/getting-started/install-the-ocm-cli/).
 
-:::{note}
-If you have trouble adding the `ocm` executable to the path `$PATH`, try this:
-
-```bash
-echo 'export PATH="$PATH:$HOME/.local/bin"' >> ~/.zshrc && source ~/.zshrc
-ocm version   # {"major":"...","minor":"...", ... "platform":"darwin/arm64"}
-```
-:::
 
 :::{note}
 To verify the binary manually (requires `gh`):
@@ -73,12 +65,12 @@ cd open-delivery-gear
 
 ## 4. Configure secrets and values
 
-ODG needs two things to start: a **GitHub App** (server-to-server access) and
+ODG needs two things to start: A **GitHub App** (server-to-server access) and
 **OIDC login** for the dashboard. Both go into `secrets-local.yaml`. We skip
 private registry config here — the main ODG images are public.
 
 :::{note}
-The full cluster config lives in `local-setup/kind/cluster/values.yaml`. You
+The main cluster config lives in `local-setup/kind/cluster/values.yaml`. You
 don't need to edit it, but the
 [values documentation](https://github.com/open-component-model/odg-core/blob/master/charts/bootstrapping/values.documentation.yaml)
 describes every field.
@@ -98,11 +90,12 @@ issues/PRs, checking security alerts).
    | GitHub App name | Something unique, e.g. `yourname-odg-local` |
    | Homepage URL | `http://localhost:3000` |
    | Callback URL | `http://localhost:3000` |
-   | Request user authorization (OAuth) during installation | ✅ enabled |
-   | Webhook | Disabled |
+   | Request user authorization (OAuth) during installation | ✅ Enabled |
+   | Webhook | ❌ Disabled |
 
 3. Under **Permissions & events**, set:
    - **Repository**: Contents, Issues, Pull requests → Read & Write
+   - (optional) **Repository**: Code / Secret scanning alerts → Read (for for the CodeQL and GHAS extensions)
    - **Organization**: Members → Read-only
 
    These extra permissions let plugins access GitHub (e.g. post findings). Org
@@ -152,19 +145,19 @@ identities to ODG roles:
 secrets:
   ...
   oauth-cfg:
-      local:
-        client_id: Iv...
-        client_secret: ...
-        api_url: https://api.github.com
-        type: github
-        name: GitHub
-        role_bindings:
-          - roles: [admin]
-            subjects:
-              - type: github-user
-                name: your-username
-              - type: github-app
-                name: your-app-name
+    local:
+      client_id: Iv...
+      client_secret: ...
+      api_url: https://api.github.com
+      type: github
+      name: GitHub
+      role_bindings:
+        - roles: [admin]
+          subjects:
+            - type: github-user
+              name: your-username
+            - type: github-app
+              name: your-app-name
 ```
 
 | Field | Where to find it |
