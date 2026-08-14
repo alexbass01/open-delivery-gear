@@ -22,16 +22,15 @@ kind-down: $(KIND) ## Tear down local KinD cluster
 
 # Build website documentation
 website-build: ## Build the website using Sphinx
-	sphinx-build -Eav docs/website website-out
+	uv run sphinx-build -Eav docs/website website-out
 
 # Setup website dependencies
 website-setup: ## Install website dependencies
-	pip3 install --break-system-packages -r docs/website/requirements.txt
-	@echo "Adding ~/.local/bin to PATH (export PATH=~/.local/bin:\$$PATH)"
+	uv sync
 
 # Development mode with auto-rebuild and live server
-website-dev: website-setup ## Setup and run website development server with auto-rebuild
-	export PATH=$$HOME/.local/bin:$$PATH && sphinx-autobuild -Eav docs/website website-out
+website-dev: ## Setup and run website development server with auto-rebuild
+	uv run sphinx-autobuild -Eav docs/website website-out
 
 # Serve built website with Python HTTP server
 website-serve: ## Serve the built website on http://localhost:8000
@@ -41,7 +40,7 @@ website-serve: ## Serve the built website on http://localhost:8000
 	fi
 	@echo "Serving website at http://localhost:8000"
 	@echo "Press Ctrl+C to stop the server"
-	cd website-out && python3 -m http.server 8000
+	cd website-out && uv run python3 -m http.server 8000
 
 # Clean website build artifacts
 website-clean: ## Remove website build artifacts
