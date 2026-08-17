@@ -13,9 +13,10 @@ on:
         description: 'Ignore renovate.json5 schedule'
         type: boolean
         default: false
-  push:
-    branches:
-      - '**'
+
+concurrency:
+  group: renovate-${{ github.repository }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
