@@ -12,6 +12,10 @@
   'updateNotScheduled': true,
   'minimumReleaseAge': '7 days',
   'branchPrefix': 'renovate/',
+  'gitAuthor': 'ocmbot[bot] <125909804+ocmbot[bot]@users.noreply.github.com>',
+  'gitIgnoredAuthors': [
+    '125909804+ocmbot[bot]@users.noreply.github.com',
+  ],
   prConcurrentLimit: 0,
   prHourlyLimit: 0,
   automerge: true,
