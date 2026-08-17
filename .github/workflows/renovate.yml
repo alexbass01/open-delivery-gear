@@ -31,7 +31,6 @@ env:
   cache_dir: /tmp/renovate/cache/renovate/repository
   cache_key: renovate-cache
   RENOVATE_CONFIG_FILE: .github/renovate.json5
-  RENOVATE_DRY_RUN: 'full'
   RENOVATE_REPOSITORY_CACHE: 'reset'
   LOG_LEVEL: 'debug'
   RENOVATE_BASE_BRANCHES: '["222-uv"]'
