@@ -22,15 +22,15 @@ kind-down: $(KIND) ## Tear down local KinD cluster
 
 # Build website documentation
 website-build: ## Build the website using Sphinx
-	uv run sphinx-build -Eav docs/website website-out
+	uv run --project docs/website sphinx-build -Eav docs/website $(REPO_ROOT)/website-out
 
 # Setup website dependencies
 website-setup: ## Install website dependencies
-	uv sync
+	uv sync --project docs/website
 
 # Development mode with auto-rebuild and live server
 website-dev: ## Setup and run website development server with auto-rebuild
-	uv run sphinx-autobuild -Eav docs/website website-out
+	uv run --project docs/website sphinx-autobuild -Eav docs/website $(REPO_ROOT)/website-out
 
 # Serve built website with Python HTTP server
 website-serve: ## Serve the built website on http://localhost:8000
