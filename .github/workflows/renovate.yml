@@ -37,12 +37,11 @@ env:
   RENOVATE_CONFIG_FILE: .github/renovate.json5
 
 jobs:
-  # Fast, credential-free config validation. Runs on every trigger so a broken
-  # config fails CI immediately instead of surfacing mid-run.
   validate:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 10
+    container:
+      image: ghcr.io/renovatebot/renovate:44.32.6@sha256:03dec876d0b8941fe3b3558c19e79b3038f73acc296f6d2550eca5df8e678294
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -51,19 +50,7 @@ jobs:
           persist-credentials: false
 
       - name: Validate Renovate config
-        uses: renovatebot/github-action@22e0a16091fc706b04affe6ae53d5e3358ac4023 # v46.1.19
-        with:
-          # Run only the validator, not a full Renovate run.
-          args: --platform=local
-        env:
-          # renovate-config-validator exits non-zero on warnings too.
-          RENOVATE_CONFIG_FILE: ${{ env.RENOVATE_CONFIG_FILE }}
-          LOG_LEVEL: debug
-          # No token needed; entrypoint below runs the validator.
-          RENOVATE_X_IGNORE_RE2: 'true'
-        # If the action version doesn't support a validate entrypoint,
-        # replace the two steps above with the container invocation below.
-
+        run: renovate-config-validator ${{ env.RENOVATE_CONFIG_FILE }}
 
   renovate:
     runs-on: ubuntu-latest
