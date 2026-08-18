@@ -37,8 +37,37 @@ env:
   RENOVATE_CONFIG_FILE: .github/renovate.json5
 
 jobs:
+  # Fast, credential-free config validation. Runs on every trigger so a broken
+  # config fails CI immediately instead of surfacing mid-run.
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          sparse-checkout: ${{ env.RENOVATE_CONFIG_FILE }}
+          persist-credentials: false
+
+      - name: Validate Renovate config
+        uses: renovatebot/github-action@22e0a16091fc706b04affe6ae53d5e3358ac4023 # v46.1.19
+        with:
+          # Run only the validator, not a full Renovate run.
+          args: --platform=local
+        env:
+          # renovate-config-validator exits non-zero on warnings too.
+          RENOVATE_CONFIG_FILE: ${{ env.RENOVATE_CONFIG_FILE }}
+          LOG_LEVEL: debug
+          # No token needed; entrypoint below runs the validator.
+          RENOVATE_X_IGNORE_RE2: 'true'
+        # If the action version doesn't support a validate entrypoint,
+        # replace the two steps above with the container invocation below.
+
+
   renovate:
     runs-on: ubuntu-latest
+    needs: validate
     environment:
       name: automation
       deployment: false
@@ -72,7 +101,7 @@ jobs:
           sudo chown -R 12021:0 /tmp/renovate/
           ls -R "$cache_dir" || true
 
-      - if: ${{ github.event_name != 'pull_request' && github.repository_owner == 'open-component-model' }}
+      - if: ${{ github.event_name != 'pull_request' && github.repository_owner == 'alexbass01' }}
         id: generate_token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:

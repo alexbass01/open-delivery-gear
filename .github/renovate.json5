@@ -9,8 +9,8 @@
     ':dependencyDashboard',
     ':rebaseStalePrs',
   ],
-  'updateNotScheduled': true,
   'minimumReleaseAge': '7 days',
+  'internalChecksFilter': 'strict',
   'branchPrefix': 'renovate/',
   'gitAuthor': 'ocmbot[bot] <125909804+ocmbot[bot]@users.noreply.github.com>',
   'gitIgnoredAuthors': [
@@ -20,6 +20,11 @@
   prHourlyLimit: 0,
   automerge: true,
   automergeType: 'pr',
+  vulnerabilityAlerts: {
+    minimumReleaseAge: null,
+    automerge: true,
+    matchUpdateTypes: ['patch', 'minor'],
+  },
   packageRules: [
     {
       matchUpdateTypes: ['major'],
