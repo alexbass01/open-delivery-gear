@@ -23,7 +23,6 @@
   vulnerabilityAlerts: {
     minimumReleaseAge: null,
     automerge: true,
-    matchUpdateTypes: ['patch', 'minor'],
   },
   packageRules: [
     {
@@ -34,6 +33,11 @@
       matchManagers: ['github-actions'],
       matchUpdateTypes: ['major'],
       automerge: true,
+    },
+    {
+      isVulnerabilityAlert: true,
+      matchUpdateTypes: ['major'],
+      automerge: false,
     },
     {
       // gardener/cc-utils is intentionally pinned to @v1 as a floating major
