@@ -47,14 +47,48 @@
       matchDepNames: ['gardener/cc-utils'],
       enabled: false,
     },
+    {
+      // OCM base-component: only automerge patch updates
+      matchFileNames: ['.ocm/base-component.yaml'],
+      matchUpdateTypes: ['patch'],
+      automerge: true,
+    },
+    {
+      // OCM base-component: require manual review for minor & major
+      matchFileNames: ['.ocm/base-component.yaml'],
+      matchUpdateTypes: ['minor', 'major'],
+      automerge: false,
+    },
   ],
+  postUpgradeTasks: {
+    // Strip @sha256:... digests that docker:pinDigests wrongly appends to
+    // the version: field (it should only be on imageReference:).
+    commands: [
+      'sed -i -E "s/^([[:space:]]*version:[[:space:]]+[^@[:space:]]+)@sha256:[a-fA-F0-9]+/\\1/" .ocm/base-component.yaml',
+    ],
+    fileFilters: ['.ocm/base-component.yaml'],
+    executionMode: 'branch',
+  },
   customManagers: [
     {
       // Track the Renovate container image version used in the validate job
       customType: 'regex',
-      managerFilePatterns: ['/.github/workflows/renovate.yml'],
+      managerFilePatterns: ['.github/workflows/renovate.yml'],
       matchStrings: ['image: ghcr.io/renovatebot/renovate:(?<currentValue>[^@\\s]+)'],
       depNameTemplate: 'ghcr.io/renovatebot/renovate',
+      datasourceTemplate: 'docker',
+    },
+    {
+      // Track external OCI images in OCM component descriptors.
+      // matchStrings[0] captures the tag in imageReference.
+      // matchStrings[1] captures the separate version: field, linked to
+      // the image via a multiline match back to imageReference.
+      customType: 'regex',
+      managerFilePatterns: ['.ocm/base-component.yaml'],
+      matchStrings: [
+        'imageReference:\\s*(?<depName>[^:\\s]+):(?<currentValue>[^\\s]+)',
+        'imageReference:\\s*(?<depName>[^:\\s]+):[^\\s]+[\\s\\S]{0,500}?\\n\\s*version:\\s*(?<currentValue>[^\\s]+)',
+      ],
       datasourceTemplate: 'docker',
     },
   ],
