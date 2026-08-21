@@ -80,13 +80,12 @@
     },
     {
       // Track external OCI images in OCM component descriptors.
-      // matchStrings[0] captures the tag in imageReference.
-      // matchStrings[1] captures the separate version: field, linked to
-      // the image via a multiline match back to imageReference.
+      // A single pattern captures depName from imageReference and
+      // currentValue from the version: field. The replaceString spans
+      // the entire block, so both the tag and version are updated together.
       customType: 'regex',
       managerFilePatterns: ['.ocm/base-component.yaml'],
       matchStrings: [
-        'imageReference:\\s*(?<depName>[^:\\s]+):(?<currentValue>[^\\s]+)',
         'imageReference:\\s*(?<depName>[^:\\s]+):[^\\s]+[\\s\\S]{0,500}?\\n\\s*version:\\s*(?<currentValue>[^\\s]+)',
       ],
       datasourceTemplate: 'docker',
