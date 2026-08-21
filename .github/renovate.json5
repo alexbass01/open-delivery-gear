@@ -67,6 +67,12 @@
       matchFileNames: ['.ocm/base-component.yaml'],
       pinDigests: false,
     },
+    {
+      // OCM base-component: use semver versioning to preserve the v-prefix
+      // in Docker tags (the default docker versioning strips it).
+      matchFileNames: ['.ocm/base-component.yaml'],
+      versioning: 'semver',
+    },
   ],
   customManagers: [
     {
@@ -82,15 +88,12 @@
       // A single pattern captures depName from imageReference and
       // currentValue from the version: field. The replaceString spans
       // the entire block, so both the tag and version are updated together.
-      // Use semver versioning to preserve the v-prefix in Docker tags
-      // (the default docker versioning strips it, producing invalid tags).
       customType: 'regex',
       managerFilePatterns: ['.ocm/base-component.yaml'],
       matchStrings: [
         'imageReference:\\s*(?<depName>[^:\\s]+):[^\\s]+[\\s\\S]{0,500}?\\n\\s*version:\\s*(?<currentValue>[^\\s]+)',
       ],
       datasourceTemplate: 'docker',
-      versioning: 'semver',
     },
   ],
 }
