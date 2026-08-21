@@ -70,12 +70,20 @@
       versionCompatibility: '^(?<compatibility>v?)(?<version>.+)$',
       versioning: 'semver',
     },
+    {
+      // envoy tags use a distroless- prefix (distroless-v1.38.x).
+      // Treat the full tag as the version so Renovate matches against the
+      // registry. postUpgradeTasks strips 'distroless-' from version:.
+      matchDepNames: ['docker.io/envoyproxy/envoy'],
+      versioning: 'regex:^distroless-v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$',
+    },
   ],
   postUpgradeTasks: {
-    // Renovate writes @sha256:... to both imageReference: and version:.
-    // Strip it from version: — OCM expects a plain semver there.
+    // 1. Strip @sha256:... that Renovate appends to version:.
+    // 2. Strip distroless- prefix from version: (envoy image uses distroless-vX.Y.Z tags).
     commands: [
       'sed -i -E "s/^([[:space:]]*version:[[:space:]]+[^@[:space:]]+)@sha256:[a-fA-F0-9]+/\\1/" .ocm/base-component.yaml',
+      'sed -i -E "s/^([[:space:]]*version:[[:space:]]+)distroless-/\\1/" .ocm/base-component.yaml',
     ],
     fileFilters: ['.ocm/base-component.yaml'],
     executionMode: 'branch',
