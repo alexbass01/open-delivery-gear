@@ -59,16 +59,15 @@
       matchUpdateTypes: ['minor', 'major'],
       automerge: false,
     },
+    {
+      // OCM base-component: disable digest pinning. The regex manager
+      // captures currentValue from the version: field, not the tag, so
+      // pinDigests would wrongly append @sha256:... to version: and
+      // break the replaceString match during version updates.
+      matchFileNames: ['.ocm/base-component.yaml'],
+      pinDigests: false,
+    },
   ],
-  postUpgradeTasks: {
-    // Strip @sha256:... digests that docker:pinDigests wrongly appends to
-    // the version: field (it should only be on imageReference:).
-    commands: [
-      'sed -i -E "s/^([[:space:]]*version:[[:space:]]+[^@[:space:]]+)@sha256:[a-fA-F0-9]+/\\1/" .ocm/base-component.yaml',
-    ],
-    fileFilters: ['.ocm/base-component.yaml'],
-    executionMode: 'branch',
-  },
   customManagers: [
     {
       // Track the Renovate container image version used in the validate job
@@ -83,12 +82,15 @@
       // A single pattern captures depName from imageReference and
       // currentValue from the version: field. The replaceString spans
       // the entire block, so both the tag and version are updated together.
+      // Use semver versioning to preserve the v-prefix in Docker tags
+      // (the default docker versioning strips it, producing invalid tags).
       customType: 'regex',
       managerFilePatterns: ['.ocm/base-component.yaml'],
       matchStrings: [
         'imageReference:\\s*(?<depName>[^:\\s]+):[^\\s]+[\\s\\S]{0,500}?\\n\\s*version:\\s*(?<currentValue>[^\\s]+)',
       ],
       datasourceTemplate: 'docker',
+      versioning: 'semver',
     },
   ],
 }
