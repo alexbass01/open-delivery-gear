@@ -60,9 +60,20 @@
       automerge: false,
     },
     {
-      // OCM base-component: use semver versioning to preserve the v-prefix
-      // in Docker tags (the default docker versioning strips it).
-      matchFileNames: ['.ocm/base-component.yaml'],
+      // gateway-helm and gateway tags use a v-prefix (v1.8.x).
+      // versionCompatibility captures the 'v' as compatibility so Renovate
+      // restores it when writing back the new version.
+      matchDepNames: [
+        'docker.io/envoyproxy/gateway-helm',
+        'docker.io/envoyproxy/gateway',
+      ],
+      versionCompatibility: '^(?<compatibility>v?)(?<version>.+)$',
+      versioning: 'semver',
+    },
+    {
+      // envoy tags use a distroless- prefix (distroless-v1.38.x).
+      matchDepNames: ['docker.io/envoyproxy/envoy'],
+      versionCompatibility: '^(?<compatibility>distroless-v?)(?<version>.+)$',
       versioning: 'semver',
     },
   ],
