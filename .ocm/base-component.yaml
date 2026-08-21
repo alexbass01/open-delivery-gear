@@ -36,12 +36,12 @@ resources:
   type: helmChart/v1
   version: v1.7.5
 - access:
-    imageReference: docker.io/envoyproxy/gateway:v1.8.3@sha256:3c3b5b6132002462b5c652cb9f1f72f532d3c848110e669f49690d9e11d9ce6e
+    imageReference: docker.io/envoyproxy/gateway:v1.9.0@sha256:3c3b5b6132002462b5c652cb9f1f72f532d3c848110e669f49690d9e11d9ce6e
     type: ociRegistry
   name: envoy-gateway
   relation: external
   type: ociImage
-  version: v1.8.3
+  version: v1.9.0
 - access:
     imageReference: docker.io/envoyproxy/envoy:distroless-v1.38.3@sha256:5f3e2f88bbeabefcdbc871f976529334aba158a3ffb17be021904f9d4c81f1c8
     type: ociRegistry
