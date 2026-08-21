@@ -60,20 +60,21 @@
       automerge: false,
     },
     {
-      // OCM base-component: disable digest pinning. The regex manager
-      // captures currentValue from the version: field, not the tag, so
-      // pinDigests would wrongly append @sha256:... to version: and
-      // break the replaceString match during version updates.
-      matchFileNames: ['.ocm/base-component.yaml'],
-      pinDigests: false,
-    },
-    {
       // OCM base-component: use semver versioning to preserve the v-prefix
       // in Docker tags (the default docker versioning strips it).
       matchFileNames: ['.ocm/base-component.yaml'],
       versioning: 'semver',
     },
   ],
+  postUpgradeTasks: {
+    // Renovate writes @sha256:... to both imageReference: and version:.
+    // Strip it from version: — OCM expects a plain semver there.
+    commands: [
+      'sed -i -E "s/^([[:space:]]*version:[[:space:]]+[^@[:space:]]+)@sha256:[a-fA-F0-9]+/\\1/" .ocm/base-component.yaml',
+    ],
+    fileFilters: ['.ocm/base-component.yaml'],
+    executionMode: 'branch',
+  },
   customManagers: [
     {
       // Track the Renovate container image version used in the validate job
@@ -85,13 +86,13 @@
     },
     {
       // Track external OCI images in OCM component descriptors.
-      // A single pattern captures depName from imageReference and
-      // currentValue from the version: field. The replaceString spans
-      // the entire block, so both the tag and version are updated together.
+      // A single pattern captures depName + currentDigest from imageReference:
+      // and currentValue from the version: field further down in the same block.
+      // postUpgradeTasks strips the digest Renovate appends to version:.
       customType: 'regex',
       managerFilePatterns: ['.ocm/base-component.yaml'],
       matchStrings: [
-        'imageReference:\\s*(?<depName>[^:\\s]+):[^\\s]+[\\s\\S]{0,500}?\\n\\s*version:\\s*(?<currentValue>[^\\s]+)',
+        'imageReference:\\s*(?<depName>[^:\\s]+):[^@\\s]+(?:@(?<currentDigest>sha256:[a-f0-9]+))?[\\s\\S]{0,500}?\\n\\s*version:\\s*(?<currentValue>[^@\\s]+)',
       ],
       datasourceTemplate: 'docker',
     },
