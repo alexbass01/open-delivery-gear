@@ -70,12 +70,6 @@
       versionCompatibility: '^(?<compatibility>v?)(?<version>.+)$',
       versioning: 'semver',
     },
-    {
-      // envoy tags use a distroless- prefix (distroless-v1.38.x).
-      matchDepNames: ['docker.io/envoyproxy/envoy'],
-      versionCompatibility: '^(?<compatibility>distroless-v?)(?<version>.+)$',
-      versioning: 'semver',
-    },
   ],
   postUpgradeTasks: {
     // Renovate writes @sha256:... to both imageReference: and version:.
