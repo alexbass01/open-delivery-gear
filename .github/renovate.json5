@@ -10,8 +10,7 @@
     ':rebaseStalePrs',
   ],
   'internalChecksFilter': 'strict',
-  'minimumReleaseAge': '7 days',
-  'ignorePaths': ['.ocm/'],
+  // 'minimumReleaseAge': '7 days', // disabled for testing
   'branchPrefix': 'renovate/',
   // You can build the email with this info: curl -s https://api.github.com/users/odgbot%5Bbot%5D | grep -E '"id"|"login"' — format: <id>+<slug>[bot]@users.noreply.github.com
   'gitAuthor': 'odgbot[bot] <319464553+odgbot[bot]@users.noreply.github.com>',
@@ -43,37 +42,36 @@
       matchDepNames: ['gardener/cc-utils'],
       enabled: false,
     },
-    // {
-    //   // gateway-helm and gateway tags use a v-prefix (v1.8.x).
-    //   // versionCompatibility captures the 'v' as compatibility so Renovate
-    //   // restores it when writing back the new version.
-    //   matchDepNames: [
-    //     'docker.io/envoyproxy/gateway-helm',
-    //     'docker.io/envoyproxy/gateway',
-    //   ],
-    //   versionCompatibility: '^(?<compatibility>v?)(?<version>.+)$',
-    //   versioning: 'semver',
-    // },
-    // {
-    //   // envoy tags use a distroless- prefix (distroless-v1.38.x).
-    //   // versionCompatibility makes 'distroless-' optional so the regex
-    //   // matches BOTH the tag (distroless-v1.38.3) and the version field
-    //   // (v1.38.3). The compatibility prefix is restored on write-back,
-    //   // so the tag gets 'distroless-' and the version field does not.
-    //   matchDepNames: ['docker.io/envoyproxy/envoy'],
-    //   versionCompatibility: '^(?<compatibility>distroless-)?(?<version>.+)$',
-    //   versioning: 'semver',
-    // },
+    {
+      // gateway-helm and gateway tags use a v-prefix (v1.8.x).
+      // versionCompatibility captures the 'v' as compatibility so Renovate
+      // restores it when writing back the new version.
+      matchDepNames: [
+        'docker.io/envoyproxy/gateway-helm',
+        'docker.io/envoyproxy/gateway',
+      ],
+      versionCompatibility: '^(?<compatibility>v?)(?<version>.+)$',
+      versioning: 'semver',
+    },
+    {
+      // envoy tags use a distroless- prefix (distroless-v1.38.x).
+      // versionCompatibility makes 'distroless-' optional so the regex
+      // matches BOTH the tag (distroless-v1.38.3) and the version field
+      // (v1.38.3). The compatibility prefix is restored on write-back,
+      // so the tag gets 'distroless-' and the version field does not.
+      matchDepNames: ['docker.io/envoyproxy/envoy'],
+      versionCompatibility: '^(?<compatibility>distroless-)?(?<version>.+)$',
+      versioning: 'semver',
+    },
+    {
+      // Bundle gateway-helm + gateway into a single PR.
+      matchDepNames: [
+        'docker.io/envoyproxy/gateway-helm',
+        'docker.io/envoyproxy/gateway',
+      ],
+      groupName: 'envoy-gateway',
+    },
   ],
-  // postUpgradeTasks: {
-  //   // Strip @sha256:... that Renovate may append to the version: field
-  //   // (the digest should only live in imageReference:).
-  //   commands: [
-  //     'sed -i -E "s/^([[:space:]]*version:[[:space:]]+[^@[:space:]]+)@sha256:[a-fA-F0-9]+/\\1/" .ocm/base-component.yaml',
-  //   ],
-  //   fileFilters: ['.ocm/base-component.yaml'],
-  //   executionMode: 'branch',
-  // },
   customManagers: [
     {
       // Track the Renovate version used in the workflow
@@ -83,24 +81,84 @@
       depNameTemplate: 'ghcr.io/renovatebot/renovate',
       datasourceTemplate: 'docker',
     },
-    // {
-    //   // Track external OCI images in OCM component descriptors.
-    //   // Two matchStrings create two matches per resource (same depName):
-    //   //   [0] captures the tag from imageReference: as currentValue +
-    //   //       the digest as currentDigest (so Renovate updates both).
-    //   //   [1] captures the separate version: field as currentValue,
-    //   //       linked to the same depName via a multiline match back to
-    //   //       imageReference:. Also captures currentDigest so Renovate
-    //   //       fetches newDigest during version updates too.
-    //   // Renovate deduplicates by depName and updates ALL occurrences of
-    //   // currentValue, so both the tag and the version field stay in sync.
-    //   customType: 'regex',
-    //   managerFilePatterns: ['.ocm/base-component.yaml'],
-    //   matchStrings: [
-    //     'imageReference:\\s*(?<depName>[^:\\s]+):(?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?',
-    //     'imageReference:\\s*(?<depName>[^:\\s]+):[^@\\s]+(?:@(?<currentDigest>sha256:[a-f0-9]+))?[\\s\\S]{0,500}?\\n\\s*version:\\s*(?<currentValue>[^@\\s]+)',
-    //   ],
-    //   datasourceTemplate: 'docker',
-    // },
+    // -- OCM component descriptor: imageReference lines (tag + digest) --
+    {
+      // gateway-helm: imageReference gets depName:tag@digest
+      customType: 'regex',
+      managerFilePatterns: ['.ocm/base-component.yaml'],
+      matchStrings: [
+        'imageReference:\\s*(?<depName>docker\\.io/envoyproxy/gateway-helm):(?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?',
+      ],
+      autoReplaceStringTemplate: 'imageReference: {{{depName}}}:{{{newValue}}}@{{{newDigest}}}',
+      datasourceTemplate: 'docker',
+    },
+    {
+      // gateway (ociImage): imageReference gets depName:tag@digest
+      customType: 'regex',
+      managerFilePatterns: ['.ocm/base-component.yaml'],
+      matchStrings: [
+        'imageReference:\\s*(?<depName>docker\\.io/envoyproxy/gateway):(?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?',
+      ],
+      autoReplaceStringTemplate: 'imageReference: {{{depName}}}:{{{newValue}}}@{{{newDigest}}}',
+      datasourceTemplate: 'docker',
+    },
+    {
+      // envoy proxy: imageReference gets depName:distroless-tag@digest
+      customType: 'regex',
+      managerFilePatterns: ['.ocm/base-component.yaml'],
+      matchStrings: [
+        'imageReference:\\s*(?<depName>docker\\.io/envoyproxy/envoy):(?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?',
+      ],
+      autoReplaceStringTemplate: 'imageReference: {{{depName}}}:{{{newValue}}}@{{{newDigest}}}',
+      datasourceTemplate: 'docker',
+    },
+    // -- OCM component descriptor: version lines (no digest) --
+    {
+      // gateway-helm version field, identified by "type: helmChart/v1" on the line before
+      customType: 'regex',
+      managerFilePatterns: ['.ocm/base-component.yaml'],
+      matchStrings: [
+        '(?<context>\\n  type:\\s*helmChart/v1\\n)  version:\\s*(?<currentValue>[^\\s]+)',
+      ],
+      depNameTemplate: 'docker.io/envoyproxy/gateway-helm',
+      autoReplaceStringTemplate: '{{{context}}}  version: {{{newValue}}}',
+      datasourceTemplate: 'docker',
+    },
+    {
+      // gateway (ociImage) version field, identified by name+type combo
+      customType: 'regex',
+      managerFilePatterns: ['.ocm/base-component.yaml'],
+      matchStrings: [
+        '(?<context>\\n  name:\\s*envoy-gateway\\n  relation:\\s*external\\n  type:\\s*ociImage\\n)  version:\\s*(?<currentValue>[^\\s]+)',
+      ],
+      depNameTemplate: 'docker.io/envoyproxy/gateway',
+      autoReplaceStringTemplate: '{{{context}}}  version: {{{newValue}}}',
+      datasourceTemplate: 'docker',
+    },
+    {
+      // envoy proxy version field, identified by name+type combo
+      customType: 'regex',
+      managerFilePatterns: ['.ocm/base-component.yaml'],
+      matchStrings: [
+        '(?<context>\\n  name:\\s*envoy-proxy\\n  relation:\\s*external\\n  type:\\s*ociImage\\n)  version:\\s*(?<currentValue>[^\\s]+)',
+      ],
+      depNameTemplate: 'docker.io/envoyproxy/envoy',
+      autoReplaceStringTemplate: '{{{context}}}  version: {{{newValue}}}',
+      datasourceTemplate: 'docker',
+    },
+    // -- extension-definitions.yaml: cross-file sync with gateway-helm --
+    {
+      // artefact version for envoy-gateway in extension-definitions.
+      // Anchors on 'artefact:' to skip the mappings entry which also
+      // has 'name: envoy-gateway' but tracks an unrelated ODG version.
+      customType: 'regex',
+      managerFilePatterns: ['extension-definitions.yaml'],
+      matchStrings: [
+        '(?<context>artefact:\\s*\\n\\s*name:\\s*envoy-gateway\\s*\\n\\s*)version:\\s*(?<currentValue>[^\\s]+)',
+      ],
+      depNameTemplate: 'docker.io/envoyproxy/gateway-helm',
+      autoReplaceStringTemplate: '{{{context}}}version: {{{newValue}}}',
+      datasourceTemplate: 'docker',
+    },
   ],
 }
