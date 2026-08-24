@@ -117,7 +117,7 @@ jobs:
         uses: renovatebot/github-action@e09d604f8f803bb527bd8321ed5be06c460b8682 # v46.2.2
         with:
           env-regex: |
-            ^(?:RENOVATE_\w+|LOG_LEVEL|GITHUB_COM_TOKEN|NODE_OPTIONS|(?:HTTPS?|NO)_PROXY|(?:https?|no)_proxy)$
+            ^(?:RENOVATE_\w+|LOG_LEVEL|GITHUB_COM_TOKEN|NODE_OPTIONS|(?:HTTPS?|NO)_PROXY|(?:https?|no)_proxy|DOCKER_HUB_(?:USERNAME|PASSWORD))$
           token: ${{ steps.generate_token.outputs.token || secrets.GITHUB_TOKEN }}
           renovate-version: '44.39.0@sha256:e331219979fc6b38fc5cf7cd5beda63d4fc19963c3ef20404a2e99c8c12118a0'
         env:
@@ -128,6 +128,8 @@ jobs:
           RENOVATE_REPOSITORIES: "${{ github.repository }}"
           RENOVATE_REPOSITORY_CACHE: ${{ github.event_name == 'workflow_dispatch' && inputs.repoCache || 'enabled' }}
           RENOVATE_FORCE: ${{ (github.event_name == 'workflow_dispatch' && inputs.ignoreSchedule) && '{"schedule":null}' || '' }}
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
           # RENOVATE_ALLOWED_POST_UPGRADE_COMMANDS: '["sed"]'
 
       - name: Compress renovate cache
