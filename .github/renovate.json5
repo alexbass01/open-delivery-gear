@@ -43,6 +43,20 @@
       enabled: false,
     },
     {
+      // Disable pinDigests for OCM deps. The docker:pinDigests preset
+      // creates a separate "pin" update (same version, new digest) that
+      // collides with version bumps in the same grouped branch. Digests
+      // are already pre-populated and updated automatically via the
+      // currentDigest/newDigest capture groups + autoReplaceStringTemplate.
+      matchDepNames: [
+        'docker.io/envoyproxy/gateway-helm',
+        'docker.io/envoyproxy/gateway',
+        'docker.io/envoyproxy/envoy',
+        'docker.io/envoyproxy/envoy-version',
+      ],
+      pinDigests: false,
+    },
+    {
       // gateway-helm and gateway tags use a v-prefix (v1.8.x).
       // versionCompatibility captures the 'v' as compatibility so Renovate
       // restores it when writing back the new version.
