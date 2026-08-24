@@ -15,6 +15,7 @@
   'gitAuthor': 'odgbot[bot] <319464553+odgbot[bot]@users.noreply.github.com>',
   'gitIgnoredAuthors': [
     '319464553+odgbot[bot]@users.noreply.github.com',
+    '317879433+alex-ocmbot[bot]@users.noreply.github.com',
   ],
   prConcurrentLimit: 0,
   prHourlyLimit: 0,
@@ -115,7 +116,7 @@
       matchStrings: [
         'imageReference:\\s*(?<depName>docker\\.io/envoyproxy/gateway-helm):(?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?',
       ],
-      autoReplaceStringTemplate: 'imageReference: {{{depName}}}:{{{newValue}}}@{{{newDigest}}}',
+      autoReplaceStringTemplate: 'imageReference: {{{depName}}}:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}',
       datasourceTemplate: 'docker',
     },
     {
@@ -125,7 +126,7 @@
       matchStrings: [
         'imageReference:\\s*(?<depName>docker\\.io/envoyproxy/gateway):(?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?',
       ],
-      autoReplaceStringTemplate: 'imageReference: {{{depName}}}:{{{newValue}}}@{{{newDigest}}}',
+      autoReplaceStringTemplate: 'imageReference: {{{depName}}}:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}',
       datasourceTemplate: 'docker',
     },
     {
@@ -140,7 +141,7 @@
       matchStrings: [
         'imageReference:\\s*(?<depName>docker\\.io/envoyproxy/envoy):(?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?',
       ],
-      autoReplaceStringTemplate: 'imageReference: {{{depName}}}:{{{newValue}}}@{{{newDigest}}}',
+      autoReplaceStringTemplate: 'imageReference: {{{depName}}}:{{{newValue}}}{{#if newDigest}}@{{{newDigest}}}{{/if}}',
       datasourceTemplate: 'docker',
     },
     // -- OCM component descriptor: version lines (no digest) --
