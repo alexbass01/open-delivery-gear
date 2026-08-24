@@ -15,7 +15,7 @@ kind-down: $(KIND) ## Tear down local KinD cluster
 	./local-setup/kind/kind-down.sh \
 		--cluster-name $(CLUSTER_NAME)
 
-.PHONY: kind-up kind-update kind-down website-build website-setup website-dev website-serve website-clean help
+.PHONY: kind-up kind-update kind-down website-build website-setup website-dev website-serve website-clean renovate-dry-run help
 
 # Default target
 .DEFAULT_GOAL := help
@@ -46,6 +46,21 @@ website-serve: ## Serve the built website on http://localhost:8000
 website-clean: ## Remove website build artifacts
 	rm -rf website-out
 
+# Run Renovate locally in dry-run mode (requires GITHUB_TOKEN and DOCKER_HUB_USERNAME/PASSWORD in env)
+renovate-dry-run: ## Run Renovate locally in dry-run (lookup) mode via Docker
+	@test -n "$$RENOVATE_TOKEN" || { echo "Error: RENOVATE_TOKEN is required (use a GitHub PAT)"; exit 1; }
+	docker run --rm -v "$(REPO_ROOT):/repo" -w /repo \
+		-e RENOVATE_TOKEN \
+		-e DOCKER_HUB_USERNAME \
+		-e DOCKER_HUB_PASSWORD \
+		-e RENOVATE_DRY_RUN=lookup \
+		-e RENOVATE_PLATFORM=github \
+		-e RENOVATE_REPOSITORIES="alexbass01/open-delivery-gear" \
+		-e RENOVATE_ONBOARDING=false \
+		-e RENOVATE_CONFIG_FILE=.github/renovate.json5 \
+		-e LOG_LEVEL=debug \
+		ghcr.io/renovatebot/renovate:44.39.0
+
 # Help target
 help: ## Show this help message
 	@echo "Available targets:"
@@ -55,3 +70,6 @@ help: ## Show this help message
 	@echo ""
 	@echo "Website:"
 	@grep -E '^website-[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "Renovate:"
+	@grep -E '^renovate-[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'

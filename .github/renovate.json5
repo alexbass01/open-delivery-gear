@@ -45,6 +45,10 @@
       // gateway-helm and gateway tags use a v-prefix (v1.8.x).
       // versionCompatibility captures the 'v' as compatibility so Renovate
       // restores it when writing back the new version.
+      // pinDigests is disabled and digest/pinDigest update types are blocked
+      // because these images already have digests pinned manually in
+      // base-component.yaml; digest-update collisions with version upgrades
+      // in the same grouped branch cause "Ignoring upgrade collision" errors.
       matchDepNames: [
         'docker.io/envoyproxy/gateway-helm',
         'docker.io/envoyproxy/gateway',
@@ -52,6 +56,19 @@
       ],
       versionCompatibility: '^(?<compatibility>v?)(?<version>.+)$',
       versioning: 'semver',
+      pinDigests: false,
+    },
+    {
+      // Disable digest refresh and pin updates for envoy deps to prevent
+      // collisions with version upgrades in the same grouped branch.
+      matchDepNames: [
+        'docker.io/envoyproxy/gateway-helm',
+        'docker.io/envoyproxy/gateway',
+        'docker.io/envoyproxy/envoy-version',
+        'docker.io/envoyproxy/envoy',
+      ],
+      matchUpdateTypes: ['digest', 'pinDigest'],
+      enabled: false,
     },
     {
       // envoy tags use a distroless- prefix (distroless-v1.38.x).
@@ -62,6 +79,7 @@
       matchDepNames: ['docker.io/envoyproxy/envoy'],
       versionCompatibility: '^(?<compatibility>distroless-)?(?<version>.+)$',
       versioning: 'semver',
+      pinDigests: false,
     },
     {
       // Bundle gateway-helm + gateway into a single PR.

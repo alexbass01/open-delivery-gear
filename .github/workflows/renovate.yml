@@ -130,6 +130,7 @@ jobs:
           RENOVATE_FORCE: ${{ (github.event_name == 'workflow_dispatch' && inputs.ignoreSchedule) && '{"schedule":null}' || '' }}
           DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
           DOCKER_HUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          LOG_LEVEL: debug
           # RENOVATE_ALLOWED_POST_UPGRADE_COMMANDS: '["sed"]'
 
       - name: Compress renovate cache
