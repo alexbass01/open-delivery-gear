@@ -49,11 +49,13 @@
       ],
       versionCompatibility: '^(?<compatibility>v?)(?<version>.+)$',
       versioning: 'semver',
+      pinDigests: true,
     },
     {
       matchDepNames: ['docker.io/envoyproxy/envoy'],
       versionCompatibility: '^(?<compatibility>distroless-)?(?<version>.+)$',
       versioning: 'semver',
+      pinDigests: true,
     },
   ],
   postUpgradeTasks: {
