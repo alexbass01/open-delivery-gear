@@ -15,7 +15,7 @@ kind-down: $(KIND) ## Tear down local KinD cluster
 	./local-setup/kind/kind-down.sh \
 		--cluster-name $(CLUSTER_NAME)
 
-.PHONY: kind-up kind-update kind-down website-build website-setup website-dev website-serve website-clean help
+.PHONY: kind-up kind-update kind-down website-build website-setup website-dev website-serve website-clean sync-ocm-component help
 
 # Default target
 .DEFAULT_GOAL := help
@@ -46,12 +46,18 @@ website-serve: ## Serve the built website on http://localhost:8000
 website-clean: ## Remove website build artifacts
 	rm -rf website-out
 
+sync-ocm-component: ## Sync OCM component descriptor versions from imageReference tags
+	uv run python3 .ci/sync-ocm-component
+
 # Help target
 help: ## Show this help message
 	@echo "Available targets:"
 	@echo ""
 	@echo "KinD (Local Development):"
 	@grep -E '^kind-[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+	@echo "OCM:"
+	@grep -E '^sync-[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Website:"
 	@grep -E '^website-[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
