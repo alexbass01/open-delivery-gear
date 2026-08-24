@@ -49,16 +49,17 @@
       matchDepNames: [
         'docker.io/envoyproxy/gateway-helm',
         'docker.io/envoyproxy/gateway',
+        'docker.io/envoyproxy/envoy-version',
       ],
       versionCompatibility: '^(?<compatibility>v?)(?<version>.+)$',
       versioning: 'semver',
     },
     {
       // envoy tags use a distroless- prefix (distroless-v1.38.x).
-      // versionCompatibility makes 'distroless-' optional so the regex
-      // matches BOTH the tag (distroless-v1.38.3) and the version field
-      // (v1.38.3). The compatibility prefix is restored on write-back,
-      // so the tag gets 'distroless-' and the version field does not.
+      // versionCompatibility captures 'distroless-' as compatibility so the
+      // correct tag (distroless-v1.39.0) is selected and the correct digest
+      // is looked up. The version field uses a separate depName
+      // (envoy-version) with a v?-only versionCompatibility rule.
       matchDepNames: ['docker.io/envoyproxy/envoy'],
       versionCompatibility: '^(?<compatibility>distroless-)?(?<version>.+)$',
       versioning: 'semver',
@@ -70,6 +71,14 @@
         'docker.io/envoyproxy/gateway',
       ],
       groupName: 'envoy-gateway',
+    },
+    {
+      // Bundle envoy image + version into a single PR.
+      matchDepNames: [
+        'docker.io/envoyproxy/envoy',
+        'docker.io/envoyproxy/envoy-version',
+      ],
+      groupName: 'envoy-proxy',
     },
   ],
   customManagers: [
@@ -104,6 +113,11 @@
     },
     {
       // envoy proxy: imageReference gets depName:distroless-tag@digest
+      // The distroless- prefix stays in currentValue so versionCompatibility
+      // selects the correct tag (distroless-v1.39.0) and looks up the
+      // correct digest. The version field uses a separate depName
+      // (envoy-version) with packageNameTemplate pointing to the same
+      // Docker image, so it gets newValue=v1.39.0 (without distroless-).
       customType: 'regex',
       managerFilePatterns: ['.ocm/base-component.yaml'],
       matchStrings: [
@@ -136,13 +150,18 @@
       datasourceTemplate: 'docker',
     },
     {
-      // envoy proxy version field, identified by name+type combo
+      // envoy proxy version field, identified by name+type combo.
+      // Uses a separate depName (envoy-version) with packageNameTemplate
+      // pointing to the same Docker image. This avoids upgrade collisions
+      // with the imageReference regex (which gets newValue=distroless-vX.Y.Z
+      // while this gets newValue=vX.Y.Z). Both are grouped via groupName.
       customType: 'regex',
       managerFilePatterns: ['.ocm/base-component.yaml'],
       matchStrings: [
         '(?<context>\\n  name:\\s*envoy-proxy\\n  relation:\\s*external\\n  type:\\s*ociImage\\n)  version:\\s*(?<currentValue>[^\\s]+)',
       ],
-      depNameTemplate: 'docker.io/envoyproxy/envoy',
+      depNameTemplate: 'docker.io/envoyproxy/envoy-version',
+      packageNameTemplate: 'docker.io/envoyproxy/envoy',
       autoReplaceStringTemplate: '{{{context}}}  version: {{{newValue}}}',
       datasourceTemplate: 'docker',
     },
