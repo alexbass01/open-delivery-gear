@@ -60,7 +60,7 @@
   ],
   postUpgradeTasks: {
     commands: [
-      'python3 .ci/sync-ocm-component',
+      'python3 .ci/renovate-sync-ocm',
     ],
     fileFilters: ['.ocm/base-component.yaml', 'extension-definitions.yaml'],
     executionMode: 'branch',
