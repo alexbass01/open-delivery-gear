@@ -15,10 +15,7 @@ EXTENSION_DEFINITIONS_FILE = os.path.join(repo_dir, 'extension-definitions.yaml'
 
 def derive_version(image_reference):
     ref = image_reference.split('@')[0]
-    tag = ref.rsplit(':', 1)[-1]
-    if tag.startswith('distroless-'):
-        tag = tag[len('distroless-'):]
-    return tag
+    return ref.rsplit(':', 1)[-1].removeprefix('distroless-')
 
 
 def update_base_component(filepath):
