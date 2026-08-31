@@ -48,27 +48,27 @@ def update_base_component(filepath):
             current_type = None
             current_name = None
 
-        m = re.match(r'^    imageReference:\s*(.+)$', line)
-        if m:
-            ref = m.group(1).strip()
+        match = re.match(r'^    imageReference:\s*(.+)$', line)
+        if match:
+            ref = match.group(1).strip()
             pending_version = derive_version(ref)
             result.append(line)
             continue
 
-        m = re.match(r'^  name:\s*(.+)$', line)
-        if m:
-            current_name = m.group(1).strip()
+        match = re.match(r'^  name:\s*(.+)$', line)
+        if match:
+            current_name = match.group(1).strip()
             result.append(line)
             continue
 
-        m = re.match(r'^  type:\s*(.+)$', line)
-        if m:
-            current_type = m.group(1).strip()
+        match = re.match(r'^  type:\s*(.+)$', line)
+        if match:
+            current_type = match.group(1).strip()
             result.append(line)
             continue
 
-        m = re.match(r'^  version:\s*(.+)$', line)
-        if m and pending_version is not None:
+        match = re.match(r'^  version:\s*(.+)$', line)
+        if match and pending_version is not None:
             result.append(f'  version: {pending_version}\n')
             if current_type == 'helmChart/v1':
                 helmchart_versions[current_name] = pending_version
@@ -98,9 +98,9 @@ def update_extension_definitions(filepath, helmchart_versions):
     pending_version = None
 
     for line in lines:
-        m = re.match(r'^(\s*)(?:-\s*)?artefact:\s*$', line)
-        if m:
-            artefact_indent = len(m.group(1)) + (2 if line.lstrip().startswith('-') else 0)
+        match = re.match(r'^(\s*)(?:-\s*)?artefact:\s*$', line)
+        if match:
+            artefact_indent = len(match.group(1)) + (2 if line.lstrip().startswith('-') else 0)
             pending_version = None
             result.append(line)
             continue
@@ -111,15 +111,15 @@ def update_extension_definitions(filepath, helmchart_versions):
                 artefact_indent = None
                 pending_version = None
             else:
-                m = re.match(r'^\s*name:\s*(\S+)\s*$', line)
-                if m:
-                    pending_version = helmchart_versions.get(m.group(1))
+                match = re.match(r'^\s*name:\s*(\S+)\s*$', line)
+                if match:
+                    pending_version = helmchart_versions.get(match.group(1))
                     result.append(line)
                     continue
 
-                m = re.match(r'^(\s*)version:.*$', line)
-                if m and pending_version is not None:
-                    result.append(f'{m.group(1)}version: {pending_version}\n')
+                match = re.match(r'^(\s*)version:.*$', line)
+                if match and pending_version is not None:
+                    result.append(f'{match.group(1)}version: {pending_version}\n')
                     pending_version = None
                     continue
 
