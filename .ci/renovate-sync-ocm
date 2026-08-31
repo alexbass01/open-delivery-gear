@@ -3,9 +3,6 @@
 import os
 import re
 import subprocess
-import sys
-
-import yaml
 
 
 own_dir = os.path.dirname(__file__)
@@ -91,17 +88,45 @@ def update_extension_definitions(filepath, helmchart_versions):
         return
 
     with open(filepath) as f:
-        docs = list(yaml.safe_load_all(f.read()))
+        lines = f.readlines()
 
-    for doc in docs:
-        for ref in doc.get('installation', {}).get('ocm_references', []):
-            artefact = ref.get('artefact', {})
-            name = artefact.get('name')
-            if name in helmchart_versions:
-                artefact['version'] = helmchart_versions[name]
+    # Line-based replacement of the 'version:' of matching 'artefact:' blocks.
+    # Deliberately avoids PyYAML: it is not available in the renovate container,
+    # and a yaml round-trip would reformat the whole file.
+    result = []
+    artefact_indent = None
+    pending_version = None
+
+    for line in lines:
+        m = re.match(r'^(\s*)(?:-\s*)?artefact:\s*$', line)
+        if m:
+            artefact_indent = len(m.group(1)) + (2 if line.lstrip().startswith('-') else 0)
+            pending_version = None
+            result.append(line)
+            continue
+
+        if artefact_indent is not None and line.strip():
+            indent = len(line) - len(line.lstrip())
+            if indent <= artefact_indent:
+                artefact_indent = None
+                pending_version = None
+            else:
+                m = re.match(r'^\s*name:\s*(\S+)\s*$', line)
+                if m:
+                    pending_version = helmchart_versions.get(m.group(1))
+                    result.append(line)
+                    continue
+
+                m = re.match(r'^(\s*)version:.*$', line)
+                if m and pending_version is not None:
+                    result.append(f'{m.group(1)}version: {pending_version}\n')
+                    pending_version = None
+                    continue
+
+        result.append(line)
 
     with open(filepath, 'w') as f:
-        yaml.safe_dump_all(docs, f)
+        f.writelines(result)
 
 
 def main():
