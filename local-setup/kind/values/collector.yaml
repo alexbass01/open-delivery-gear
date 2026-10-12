@@ -1,0 +1,13 @@
+# Instance values for local kind cluster (open-delivery-gear/local-setup)
+# Overrides odg-observability/charts/telemetry/values.yaml defaults
+
+backend: opensearch
+
+debug:
+  verbosity: detailed   # dev-only: shows full LogRecord bodies per record
+observedNamespace: odg    # ODG's pods live in the odg namespace here; on workload clusters it's tenant-scoped
+
+# Subchart ships with kind — ephemeral single-node OpenSearch in same cluster.
+opensearch:
+  enabled: true
+  logsIndex: logs-otel-v1

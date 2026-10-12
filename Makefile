@@ -1,7 +1,7 @@
 REPO_ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-kind-up kind-down: export CLUSTER_NAME = odg-local
-kind-up kind-update: export KUBECONFIG = $(REPO_ROOT)/local-setup/kind/kubeconfig
+kind-up kind-down kind-logs-on kind-logs-off: export CLUSTER_NAME = odg-local
+kind-up kind-update kind-logs-on kind-logs-off: export KUBECONFIG = $(REPO_ROOT)/local-setup/kind/kubeconfig
 kind-up kind-update: export PATH_CLUSTER_CHART = $(REPO_ROOT)/local-setup/kind/cluster
 
 kind-up: $(KIND) $(KUBECTL) $(HELM) $(OCM) ## Start local KinD cluster with ODG
@@ -14,8 +14,12 @@ kind-update: $(KIND) $(KUBECTL) $(HELM) $(OCM) ## Update existing KinD cluster w
 kind-down: $(KIND) ## Tear down local KinD cluster
 	./local-setup/kind/kind-down.sh \
 		--cluster-name $(CLUSTER_NAME)
+kind-logs-on: $(HELM) $(KUBECTL) ## Deploy telemetry stack (OTel collector + OpenSearch) to kind
+	./local-setup/kind/logs-on.sh
+kind-logs-off: $(HELM) $(KUBECTL) ## Remove telemetry stack from kind
+	./local-setup/kind/logs-off.sh
 
-.PHONY: kind-up kind-update kind-down website-build website-setup website-dev website-serve website-clean help
+.PHONY: kind-up kind-update kind-down kind-logs-on kind-logs-off website-build website-setup website-dev website-serve website-clean help
 
 # Default target
 .DEFAULT_GOAL := help
