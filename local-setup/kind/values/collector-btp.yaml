@@ -1,0 +1,21 @@
+backend: btp
+
+opensearch:
+  enabled: false   # skip local OS deploy; still useful to keep the chart
+
+opensearch-dashboards:
+  enabled: false   # BTP ships its own dashboards; not needed locally
+
+btp:
+  endpoint: ingest-otlp-sf-bdab6ede-a927-4e6a-80f3-461237d00434.cls-09.cloud.logs.services.sap.hana.ondemand.com:443
+  certsSecret: btp-otlp-credentials
+
+opentelemetry-collector:
+  extraVolumes:
+    - name: btp-certs
+      secret:
+        secretName: btp-otlp-credentials
+  extraVolumeMounts:
+    - name: btp-certs
+      mountPath: /etc/ssl/certs/btp
+      readOnly: true

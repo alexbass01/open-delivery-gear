@@ -8,6 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="${REPO_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"   # script lives in local-setup/kind/, repo root is two levels up
 ODG_OBSERVABILITY="${ODG_OBSERVABILITY:-${REPO_ROOT}/../odg-observability}"
+METRICS_OPERATOR_ENABLED="${METRICS_OPERATOR_ENABLED:-1}"
 # Always target the kind cluster's kubeconfig explicitly — don't inherit caller's
 # multi-file KUBECONFIG (kubectl chokes on ":"-separated values via [--kubeconfig])
 KUBECONFIG_FILE="${REPO_ROOT}/local-setup/kind/kubeconfig"
@@ -27,6 +28,10 @@ command -v kubectl >/dev/null || die "kubectl not found"
 command -v helm    >/dev/null || die "helm not found"
 [ -f "${KUBECONFIG_FILE}" ] || die "kubeconfig not found at ${KUBECONFIG_FILE} — run 'make kind-up' first"
 [ -d "${ODG_OBSERVABILITY}/charts/telemetry" ] || die "telemetry chart not found at ${ODG_OBSERVABILITY}/charts/telemetry"
+if [ "${METRICS_OPERATOR_ENABLED}" = "1" ]; then
+  [ -d "${ODG_OBSERVABILITY}/charts/odg-metrics" ] || die "odg-metrics wrapper chart not found at ${ODG_OBSERVABILITY}/charts/odg-metrics (set METRICS_OPERATOR_ENABLED=0 to skip)"
+  [ -d "${REPO_ROOT}/../metrics-operator/charts/metrics-operator" ] || die "metrics-operator chart not found at ${REPO_ROOT}/../metrics-operator — file:// dep; checkout expected beside $(basename ${REPO_ROOT})"
+fi
 
 alias k8s="kubectl --kubeconfig=${KUBECONFIG_FILE}"
 k() { kubectl --kubeconfig="${KUBECONFIG_FILE}" "$@"; }
@@ -162,8 +167,8 @@ if [ "$READY" != "true" ]; then
   exit 1
 fi
 
-# Idempotent create-or-update of index patterns (logs + traces)
-# Both use @timestamp (opensearch exporter emits it for traces as well)
+# Idempotent create-or-update of index patterns for logs + traces only.
+# Metrics no longer land in OpenSearch — they go to Prometheus via scrape.
 for NAME in logs-otel-v1 traces-otel-v1; do
   info "Creating index pattern $NAME"
   curl -sku "admin:${ADMIN_PASSWORD}" -X POST "http://localhost:15601/api/saved_objects/index-pattern/${NAME}" \
@@ -175,6 +180,42 @@ for NAME in logs-otel-v1 traces-otel-v1; do
 done
 ok "index patterns ready"
 
+# ─── Prometheus port-forward — metrics end up here via scrape-from-collector.
+# Collector exposes /metrics on :8889 (prometheus exporter); prometheus scrapes it.
+info "Setting up port-forward to Prometheus on :9090"
+lsof -ti tcp:9090 | xargs kill -9 2>/dev/null || true
+sleep 1
+nohup kubectl --kubeconfig="${KUBECONFIG_FILE}" -n "${NAMESPACE}" port-forward svc/telemetry-prometheus-server 9090:80 >/tmp/pf-prometheus.log 2>&1 &
+disown
+sleep 4
+if ! lsof -i tcp:9090 >/dev/null 2>&1; then
+  echo "ERROR: port-forward failed to bind on :9090" >&2
+  cat /tmp/pf-prometheus.log >&2 || true
+  exit 1
+fi
+ok "prometheus reachable at http://localhost:9090"
+
+echo
+# ─── 10. odg-metrics (metrics-operator + CRDs + ODG Metric CRs) — counts ODG
+# CRs like BacklogItems and pushes counts via OTLP to the collector (:4317),
+# which re-exports them on :8889 where the bundled prometheus scrapes.
+if [ "${METRICS_OPERATOR_ENABLED}" = "1" ]; then
+  METRICS_OPERATOR_WRAPPER="${ODG_OBSERVABILITY}/charts/odg-metrics"
+  [ -d "${METRICS_OPERATOR_WRAPPER}" ] || die "odg-metrics wrapper chart not found at ${METRICS_OPERATOR_WRAPPER}"
+
+  info "helm dep update odg-metrics"
+  helm --kubeconfig="${KUBECONFIG_FILE}" dependency update "${METRICS_OPERATOR_WRAPPER}" >/dev/null
+
+  # Collector endpoint is hard-coded in odg-metrics/values.yaml against release
+  # 'telemetry' in this namespace — keep it there; simpler than templating here.
+  info "helm upgrade --install odg-metrics"
+  helm --kubeconfig="${KUBECONFIG_FILE}" upgrade --install odg-metrics "${METRICS_OPERATOR_WRAPPER}" \
+    --namespace "${NAMESPACE}" --create-namespace \
+    --timeout 5m
+  ok "odg-metrics installed — odg_backlog_items_total lands in Prometheus within ~1 min"
+  ok "  view: http://localhost:9090/graph?g0.expr=odg_backlog_items_total"
+fi
+
 echo
 echo "────────────────────────────────────────────────────────────────"
 echo "OpenSearch admin credentials (also in: kubectl -n ${NAMESPACE} get secret ${CREDS_SECRET} -o yaml):"
@@ -184,14 +225,19 @@ echo
 echo "Next: view logs"
 echo "  curl -ku admin:${ADMIN_PASSWORD} https://localhost:9200/logs-otel-v1/_search?pretty"
 echo
-echo "Web UI:"
+echo "Logs/Traces UI (OpenSearch Dashboards):"
 echo "  http://localhost:15601"
 echo "  (login: admin / ${ADMIN_PASSWORD})"
-echo "  → Discover → index patterns: 'logs-otel-v1', 'traces-otel-v1' (both @timestamp)"
+echo "  → Discover → index patterns: 'logs-otel-v1', 'traces-otel-v1'"
+echo
+echo "Metrics UI (Prometheus):"
+echo "  http://localhost:9090"
+echo "  → /query — try 'up' or any exported metric name"
+echo "  → /targets — verify 'otel-collector' scrape is UP"
 echo
 echo "OTLP ingestion (for lab apps on this host):"
 echo "  grpc://localhost:4317"
 echo "    traces  → OpenSearch (index traces-otel-v1, visible in Dashboards)"
-echo "    metrics → collector debug log only (kubectl -n ${NAMESPACE} logs -l app.kubernetes.io/component=opentelemetry-collector-agent)"
+echo "    metrics → Prometheus (via collector :8889 scrape)"
 echo "    logs from local processes are NOT accepted (collector receives logs via filelog only)"
 echo "────────────────────────────────────────────────────────────────"

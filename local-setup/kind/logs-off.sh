@@ -13,8 +13,17 @@ ANNOTATION_KEY="${ANNOTATION_KEY:-otel.io/pod-logs}"
 
 k() { kubectl --kubeconfig="${KUBECONFIG_FILE}" "$@"; }
 
+# odg-metrics first, before the telemetry release — operator in-flight while
+# its sink disappears can produce error loops in its logs.
+helm --kubeconfig="${KUBECONFIG_FILE}" uninstall odg-metrics -n "${NAMESPACE}" --ignore-not-found || true
 helm --kubeconfig="${KUBECONFIG_FILE}" uninstall "${RELEASE}" -n "${NAMESPACE}" --ignore-not-found || true
 k delete namespace "${NAMESPACE}" --ignore-not-found
+# Helm doesn't reap crds/ on uninstall — drop them explicitly so re-installs
+# don't wedged on half-migrated CRDs (cf. helm.sh/docs/topics/charts/#limitations-on-crds)
+k delete crd metrics.open-control-plane.io datasinks.metrics.open-control-plane.io \
+  remoteclusteraccesses.metrics.open-control-plane.io federatedclusteraccesses.metrics.open-control-plane.io \
+  managedmetrics.metrics.open-control-plane.io federatedmetrics.metrics.open-control-plane.io \
+  federatedmanagedmetrics.metrics.open-control-plane.io --ignore-not-found 2>/dev/null || true
 k annotate pods -n "${OBSERVED_NS}" "${ANNOTATION_KEY}-" --all 2>/dev/null || true
 # kill port-forwards started by logs-on.sh (opensearch + dashboards + otlp)
 # dashboards pf runs under a bash restart-loop — kill the watchdog first or it respawns

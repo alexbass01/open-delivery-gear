@@ -18,8 +18,12 @@ kind-logs-on: $(HELM) $(KUBECTL) ## Deploy telemetry stack (OTel collector + Ope
 	./local-setup/kind/logs-on.sh
 kind-logs-off: $(HELM) $(KUBECTL) ## Remove telemetry stack from kind
 	./local-setup/kind/logs-off.sh
+kind-logs-btp-creds: $(KUBECTL) ## Create btp-otlp-credentials secret from BTP Cloud Logging binding JSON
+	./local-setup/kind/logs-btp-creds.sh $(ARGS)
+kind-logs-btp-on: $(HELM) $(KUBECTL) ## Deploy telemetry stack against BTP (requires kind-logs-btp-creds first)
+	./local-setup/kind/logs-on-btp.sh
 
-.PHONY: kind-up kind-update kind-down kind-logs-on kind-logs-off website-build website-setup website-dev website-serve website-clean help
+.PHONY: kind-up kind-update kind-down kind-logs-on kind-logs-off kind-logs-btp-creds kind-logs-btp-on website-build website-setup website-dev website-serve website-clean help
 
 # Default target
 .DEFAULT_GOAL := help

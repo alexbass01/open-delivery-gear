@@ -1,0 +1,10 @@
+# Values for the local metrics-operator install (chart: ~/code/github.com/metrics-operator/charts/metrics-operator).
+# Deployed by logs-on.sh into odg-observability on the kind cluster.
+
+rbac:
+  clusterRole:
+    rules:
+      # get/list/watch on the ODG CRs the Metric CRs below target.
+      - apiGroups: ["delivery-gear.gardener.cloud"]
+        resources: ["backlogitems"]
+        verbs: ["get", "list", "watch"]
