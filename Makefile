@@ -1,7 +1,7 @@
 REPO_ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 kind-up kind-down: export CLUSTER_NAME = odg-local
-kind-up kind-update: export KUBECONFIG = $(REPO_ROOT)/local-setup/kind/kubeconfig
+kind-up kind-update kind-deploy-observability: export KUBECONFIG = $(REPO_ROOT)/local-setup/kind/kubeconfig
 kind-up kind-update: export PATH_CLUSTER_CHART = $(REPO_ROOT)/local-setup/kind/cluster
 
 kind-up: $(KIND) $(KUBECTL) $(HELM) $(OCM) ## Start local KinD cluster with ODG
@@ -14,8 +14,12 @@ kind-update: $(KIND) $(KUBECTL) $(HELM) $(OCM) ## Update existing KinD cluster w
 kind-down: $(KIND) ## Tear down local KinD cluster
 	./local-setup/kind/kind-down.sh \
 		--cluster-name $(CLUSTER_NAME)
+kind-deploy-observability: $(KUBECTL) $(HELM) ## Deploy observability (prometheus-operator + kube-state-metrics) from a local odg-observability checkout.
+	## Requires: github.com/open-component-model/odg-observability checked out at ~/code/github.com/odg-observability (override: OBSERVABILITY_REPO=/path/to/checkout)
+	## After deploy, Prometheus UI is available at http://localhost:9090/graph
+	./local-setup/kind/deploy-observability.sh
 
-.PHONY: kind-up kind-update kind-down website-build website-setup website-dev website-serve website-clean help
+.PHONY: kind-up kind-update kind-down kind-deploy-observability website-build website-setup website-dev website-serve website-clean help
 
 # Default target
 .DEFAULT_GOAL := help
@@ -51,7 +55,7 @@ help: ## Show this help message
 	@echo "Available targets:"
 	@echo ""
 	@echo "KinD (Local Development):"
-	@grep -E '^kind-[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^kind-[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-28s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Website:"
 	@grep -E '^website-[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
