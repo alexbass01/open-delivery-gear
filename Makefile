@@ -3,6 +3,8 @@ REPO_ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 kind-up kind-down kind-logs-on kind-logs-off: export CLUSTER_NAME = odg-local
 kind-up kind-update kind-logs-on kind-logs-off: export KUBECONFIG = $(REPO_ROOT)/local-setup/kind/kubeconfig
 kind-up kind-update: export PATH_CLUSTER_CHART = $(REPO_ROOT)/local-setup/kind/cluster
+# local telemetry chart comes from the sibling odg-observability checkout
+kind-logs-on kind-logs-off: export ODG_OBSERVABILITY ?= $(REPO_ROOT)/../odg-observability
 
 kind-up: $(KIND) $(KUBECTL) $(HELM) $(OCM) ## Start local KinD cluster with ODG
 	./local-setup/kind/kind-up.sh \
@@ -14,16 +16,15 @@ kind-update: $(KIND) $(KUBECTL) $(HELM) $(OCM) ## Update existing KinD cluster w
 kind-down: $(KIND) ## Tear down local KinD cluster
 	./local-setup/kind/kind-down.sh \
 		--cluster-name $(CLUSTER_NAME)
-kind-logs-on: $(HELM) $(KUBECTL) ## Deploy telemetry stack (OTel collector + OpenSearch) to kind
+kind-logs-on: $(HELM) $(KUBECTL) ## Telemetry: backends on Mac (docker) + collector chart in kind
 	./local-setup/kind/logs-on.sh
-kind-logs-off: $(HELM) $(KUBECTL) ## Remove telemetry stack from kind
+kind-logs-off: $(HELM) $(KUBECTL) ## Remove telemetry stack from kind (backends data kept)
 	./local-setup/kind/logs-off.sh
-kind-logs-btp-creds: $(KUBECTL) ## Create btp-otlp-credentials secret from BTP Cloud Logging binding JSON
-	./local-setup/kind/logs-btp-creds.sh $(ARGS)
-kind-logs-btp-on: $(HELM) $(KUBECTL) ## Deploy telemetry stack against BTP (requires kind-logs-btp-creds first)
-	./local-setup/kind/logs-on-btp.sh
 
-.PHONY: kind-up kind-update kind-down kind-logs-on kind-logs-off kind-logs-btp-creds kind-logs-btp-on website-build website-setup website-dev website-serve website-clean help
+# BTP backend support was removed with the chart rework — backend=btp still
+# exists in the chart values; re-add make targets when needed.
+
+.PHONY: kind-up kind-update kind-down kind-logs-on kind-logs-off website-build website-setup website-dev website-serve website-clean help
 
 # Default target
 .DEFAULT_GOAL := help
