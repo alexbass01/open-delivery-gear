@@ -1,6 +1,6 @@
-# Local telemetry backends for open-delivery-gear on your Mac.
-# Copied from service-provider-odg/local-telemetry/compose.yml (newer version).
-# Started/stopped by ../logs-on.sh — no need to touch directly.
+# Local log backends for open-delivery-gear on your Mac.
+# Metrics live in the in-cluster prometheus (port-forwarded to :9090).
+# Started/stopped by ../observability-on.sh — no need to touch directly.
 name: odg-telemetry
 
 services:
@@ -25,19 +25,6 @@ services:
     ports:
       - "5601:5601"
     depends_on: [opensearch]
-    networks: [lab]
-
-  prometheus:
-    image: prom/prometheus:v3.4.0
-    command:
-      - --config.file=/etc/prometheus/prometheus.yml
-      # Prometheus SCRAPES the in-cluster collector :8889 via kubectl port-forward
-      # (opened by logs-on.sh). No remote-write receiver.
-      - --storage.tsdb.retention.time=7d
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    ports:
-      - "9090:9090"
     networks: [lab]
 
 networks:

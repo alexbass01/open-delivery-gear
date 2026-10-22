@@ -1,10 +1,10 @@
 REPO_ROOT := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-kind-up kind-down kind-logs-on kind-logs-off: export CLUSTER_NAME = odg-local
-kind-up kind-update kind-logs-on kind-logs-off: export KUBECONFIG = $(REPO_ROOT)/local-setup/kind/kubeconfig
+kind-up kind-down kind-observability-on kind-observability-off: export CLUSTER_NAME = odg-local
+kind-up kind-update kind-observability-on kind-observability-off: export KUBECONFIG = $(REPO_ROOT)/local-setup/kind/kubeconfig
 kind-up kind-update: export PATH_CLUSTER_CHART = $(REPO_ROOT)/local-setup/kind/cluster
-# local telemetry chart comes from the sibling odg-observability checkout
-kind-logs-on kind-logs-off: export ODG_OBSERVABILITY ?= $(REPO_ROOT)/../odg-observability
+# local observability charts come from the sibling odg-observability checkout
+kind-observability-on kind-observability-off: export ODG_OBSERVABILITY ?= $(REPO_ROOT)/../odg-observability
 
 kind-up: $(KIND) $(KUBECTL) $(HELM) $(OCM) ## Start local KinD cluster with ODG
 	./local-setup/kind/kind-up.sh \
@@ -16,15 +16,15 @@ kind-update: $(KIND) $(KUBECTL) $(HELM) $(OCM) ## Update existing KinD cluster w
 kind-down: $(KIND) ## Tear down local KinD cluster
 	./local-setup/kind/kind-down.sh \
 		--cluster-name $(CLUSTER_NAME)
-kind-logs-on: $(HELM) $(KUBECTL) ## Telemetry: backends on Mac (docker) + collector chart in kind
-	./local-setup/kind/logs-on.sh
-kind-logs-off: $(HELM) $(KUBECTL) ## Remove telemetry stack from kind (backends data kept)
-	./local-setup/kind/logs-off.sh
+kind-observability-on: $(HELM) $(KUBECTL) ## Observability: log backends on Mac (docker) + prometheus-operator & telemetry charts in kind
+	./local-setup/kind/observability-on.sh
+kind-observability-off: $(HELM) $(KUBECTL) ## Remove observability stack from kind (backends data kept)
+	./local-setup/kind/observability-off.sh
 
 # BTP backend support was removed with the chart rework — backend=btp still
 # exists in the chart values; re-add make targets when needed.
 
-.PHONY: kind-up kind-update kind-down kind-logs-on kind-logs-off website-build website-setup website-dev website-serve website-clean help
+.PHONY: kind-up kind-update kind-down kind-observability-on kind-observability-off website-build website-setup website-dev website-serve website-clean help
 
 # Default target
 .DEFAULT_GOAL := help
