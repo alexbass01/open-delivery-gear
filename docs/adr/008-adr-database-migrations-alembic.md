@@ -28,6 +28,16 @@ performance and correctness pain points. Any serious schema evolution (proper
 columns, types, indexes for the current JSON blobs) requires a real migration
 tool.
 
+Alembic in one paragraph: Alembic is the official migration tool of the
+SQLAlchemy ecosystem — the ORM ODG already uses everywhere in Python code.
+A migration is a small Python file with an `upgrade()` and `downgrade()`
+function; alembic stores which of these have been applied in an
+`alembic_version` table in the same database. Its distinctive feature
+compared to plain-SQL runners is that it can *autogenerate* the migration
+file by diffing the Python model classes against the live database. This
+means there is exactly one source of truth for the schema (the SQLAlchemy
+model classes) instead of two.
+
 ## Decision Drivers
 
 - **Reliable schema evolution**: column-level changes must be applicable
@@ -68,6 +78,10 @@ Pros:
 - Helm pre-install/pre-upgrade hook runs exactly once per release, before
   the new code rolls out. Failures block the rollout — no half-migrated
   state.
+- Running migrations repeatedly is safe: `alembic upgrade head` checks the
+  `alembic_version` table against the target revision and applies only the
+  diff. Retrying a failed upgrade, or redeploying an unchanged chart
+  version, is a no-op at the DB level.
 - Runs with the same `delivery-db` secret the app uses, no additional
   credentials.
 
