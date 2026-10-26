@@ -56,6 +56,29 @@ If you wish to stop ODG and delete the KinD cluster, you have to run
 is permanently stored on the host machine. To also clear the database storage,
 you have to delete the `/var/delivery-db` directory.
 
+## External PostgreSQL
+
+By default, `make kind-up` deploys a bundled PostgreSQL instance inside the
+KinD cluster. If you want to use a managed or external PostgreSQL database
+instead, add a `hostname` to the `delivery-db` secret in
+`local-setup/kind/secrets-local.yaml`:
+
+```yaml
+secrets:
+  delivery-db:
+    local:
+      username: postgres
+      password: <password>
+      hostname: <host>   # e.g. host.docker.internal
+      port: 5432         # optional, defaults to 5432
+      database: ""       # optional
+```
+
+When `hostname` is set, `make kind-up` and `make kind-update` will
+automatically skip the bundled `delivery-db` Helm chart. The bootstrapping
+chart picks up `hostname` from the secret values and uses it directly in the
+connection URL.
+
 ## Extensions
 ODG extensions can be dynamically added to your installation. Therefore, the
 configuration of the extensions must be done via `extensions_cfg` in the

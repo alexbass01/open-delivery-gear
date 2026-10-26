@@ -71,14 +71,20 @@ helm upgrade -i bootstrapping oci://${BOOTSTRAPPING_CHART} \
   "${HELM_OVERRIDE_ARGS[@]}" \
   --wait
 
-echo ">>> Installing delivery-database from ${DELIVERY_DATABASE_CHART}"
-# First, install custom pv and pvc to allow re-usage of host's filesystem mount
-kubectl apply -f <(helm template delivery-db-pv "${CHART}/delivery-db-pv" --values "${SCRIPT_DIR}/cluster/values-delivery-db.yaml" "${HELM_OVERRIDE_ARGS[@]}") --namespace $NAMESPACE
-helm upgrade -i delivery-db oci://${DELIVERY_DATABASE_CHART} \
-  --namespace $NAMESPACE \
-  --values ${CHART}/values-delivery-db.yaml \
-  "${HELM_OVERRIDE_ARGS[@]}" \
-  --wait
+EXTERNAL_DB_HOSTNAME=$(yq '.secrets["delivery-db"][].hostname // ""' "${SCRIPT_DIR}/secrets-local.yaml" 2>/dev/null | grep -v '^$' | head -1 || true)
+
+if [ -n "${EXTERNAL_DB_HOSTNAME}" ]; then
+  echo ">>> External DB hostname '${EXTERNAL_DB_HOSTNAME}' found in secrets-local.yaml, skipping in-cluster delivery-database"
+else
+  echo ">>> Installing delivery-database from ${DELIVERY_DATABASE_CHART}"
+  # First, install custom pv and pvc to allow re-usage of host's filesystem mount
+  kubectl apply -f <(helm template delivery-db-pv "${CHART}/delivery-db-pv" --values "${SCRIPT_DIR}/cluster/values-delivery-db.yaml" "${HELM_OVERRIDE_ARGS[@]}") --namespace $NAMESPACE
+  helm upgrade -i delivery-db oci://${DELIVERY_DATABASE_CHART} \
+    --namespace $NAMESPACE \
+    --values ${CHART}/values-delivery-db.yaml \
+    "${HELM_OVERRIDE_ARGS[@]}" \
+    --wait
+fi
 
 echo ">>> Installing delivery-service from ${DELIVERY_SERVICE_CHART}"
 helm upgrade -i delivery-service oci://${DELIVERY_SERVICE_CHART} \
