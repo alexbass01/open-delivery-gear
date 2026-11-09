@@ -72,6 +72,15 @@ jobs:
         run: |
           python3 .ci/renovate-sync-ocm
           git add --all .ocm extension-definitions.yaml
+          # FORK-ONLY debugging aid: print what the sync produced before commit.
+          # Safe to keep, harmless when nothing changed.
+          echo '--- changed files ---'
+          git status --short
+          echo '--- diff stat ---'
+          git diff --cached --stat
+          echo '--- full diff ---'
+          git diff --cached
+          echo '-------------------'
           if git diff --cached --quiet; then
             echo 'nothing to sync'
             echo "changed=false" >> "$GITHUB_OUTPUT"
