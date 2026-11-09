@@ -6,6 +6,12 @@ on:
   push:
     branches:
       - renovate/**
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'renovate/* branch to sync'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -25,7 +31,8 @@ jobs:
     # job, the second run finds nothing to change and exits without pushing.
     # FORK-ONLY: revert before contributing upstream. Upstream guards on
     # github.repository_owner == 'open-component-model' && github.actor == 'odgbot[bot]'.
-    if: github.actor == 'odgbot[bot]' || github.actor == 'alex-ocmbot[bot]'
+    # FORK-ONLY: workflow_dispatch path lets any manual run through.
+    if: github.event_name == 'workflow_dispatch' || github.actor == 'odgbot[bot]' || github.actor == 'alex-ocmbot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,6 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: ${{ inputs.branch || github.ref_name }}
           fetch-depth: 0
           # no write credentials on disk while running the script
           persist-credentials: false
@@ -103,7 +111,7 @@ jobs:
         if: steps.sync.outputs.changed == 'true'
         shell: bash
         env:
-          BRANCH: ${{ github.ref_name }}
+          BRANCH: ${{ inputs.branch || github.ref_name }}
           GH_TOKEN: ${{ steps.fed-token.outputs.token }}
         run: |
           # Author must be listed in renovate.json5 `gitIgnoredAuthors`, otherwise
