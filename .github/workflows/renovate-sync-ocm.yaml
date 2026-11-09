@@ -29,10 +29,7 @@ jobs:
   sync:
     # Only react to pushes by Renovate. If the sync push below re-triggers this
     # job, the second run finds nothing to change and exits without pushing.
-    # FORK-ONLY: revert before contributing upstream. Upstream guards on
-    # github.repository_owner == 'open-component-model' && github.actor == 'odgbot[bot]'.
-    # FORK-ONLY: workflow_dispatch path lets any manual run through.
-    if: github.event_name == 'workflow_dispatch' || github.actor == 'odgbot[bot]' || github.actor == 'alex-ocmbot[bot]'
+    if: github.event_name == 'workflow_dispatch' || (github.repository_owner == 'open-component-model' && github.actor == 'odgbot[bot]')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -80,8 +77,8 @@ jobs:
         run: |
           python3 .ci/renovate-sync-ocm
           git add --all .ocm extension-definitions.yaml
-          # FORK-ONLY debugging aid: print what the sync produced before commit.
-          # Safe to keep, harmless when nothing changed.
+          # Print what the sync produced before commit so reviewers can see the
+          # incoming changes without waiting for the push to land.
           echo '--- changed files ---'
           git status --short
           echo '--- diff stat ---'
