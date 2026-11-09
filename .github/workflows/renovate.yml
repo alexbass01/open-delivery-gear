@@ -40,7 +40,7 @@ permissions:
 jobs:
   renovate:
     # Fork test: use alexbass01 fork. Revert before merging to upstream.
-    uses: alexbass01/open-component-model-github/.github/workflows/renovate.yml@v1
+    uses: alexbass01/open-component-model-github/.github/workflows/renovate.yml@fd56a933fd93c25d92bfa94acbbb0cab162135cc # v1
     secrets: inherit
     with:
       repository: ${{ github.repository }}
